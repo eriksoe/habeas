@@ -12,10 +12,12 @@ The rules are treated below.
 
 \section{General notes about the rules}
 
+\paragraph{Notation.}
 Because of the difference in semantics between commas occurring on the
 left and on the right side of the turnstiles, we will here write the
 right-hand ones as semicolons instead, in an attempt to reduce risk of
 confusing ourselves.
+% TODO: We use $\lnot A$ rather than $A^\bot$.
 
 \paragraph{Concepts.} Central concepts regarding how the rules of
 linear logic are to be translated into programming language constructs
@@ -26,6 +28,12 @@ As it turns out, in linear logic there is an additional useful concept
 which we will call \emph{activation records}.  This term, too, is
 known from other programming languages, but activation records are
 perhaps more visible at the low level in linear logic.
+
+% TODO: Reflecting new insights,
+% - replace "activation records" with "channels",
+% - have each construct return a value *and* a set of named channels;
+% - and rewrite all A.R.-related explanations.
+% (Also, add "switch channel" construct.)
 
 \paragraph{How to read the rules.} A raw type rule typically looks like this:
 $$
@@ -356,6 +364,10 @@ $$
 \begin{quote}\tt
 \end{quote}
 
+
+% TODO: Remember rules for 'void' (1) and 'fail' ($\top$), and an
+% implicit one for $\bot$.
+% TODO: The 'let' construct (the 'cut' rule).
 
 
 % 'par' + negation provides a function/call mechanism.
