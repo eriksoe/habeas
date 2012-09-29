@@ -29,19 +29,19 @@ perhaps more visible at the low level in linear logic.
 
 \paragraph{How to read the rules.} A raw type rule typically looks like this:
 $$
-{\Sigma,A \vdash B;\Delta}\over{\Sigma,A' \vdash B';\Delta}
+{\Gamma,A \vdash B;\Delta}\over{\Gamma,A' \vdash B';\Delta}
 $$
 
-The mathematical reading of this is, ``if we can prove ${\Sigma,A
-  \vdash B;\Delta}$, then we can prove ${\Sigma,A' \vdash B';\Delta}$''.
+The mathematical reading of this is, ``if we can prove ${\Gamma,A
+  \vdash B;\Delta}$, then we can prove ${\Gamma,A' \vdash B';\Delta}$''.
 
 
 The interpretation of this rule as a programming language construct is
 somewhat different:
 \begin{quote}
   ''Starting with a value of type $A'$ (and possibly some other values
-  $\Sigma$), we get to a state where we have a value of type $A$ (and
-  still $\Sigma$, unchanged). Then control passes to some sub-part of
+  $\Gamma$), we get to a state where we have a value of type $A$ (and
+  still $\Gamma$, unchanged). Then control passes to some sub-part of
   the construct; when this part is done, it has left an activation
   record of type $B$ as well as some other activation records
   $\Delta$. The construct then transforms this into an activation
@@ -92,11 +92,13 @@ Each of the four binary operators have a neutral element:
   \end{tabular}
 \end{center}
 
+
 \section{Linear Logic Rules and Habeas Language Constructs}
 
 In the following we go through each of the derivation rules of linear
 logic and see, what language construct each gives rise to.
 
+
 \subsection{Rules for $\otimes$, the Product Type}
 % If Γ,A,B,Δ⊢Θ, then Γ,A⊗B,Δ⊢Θ; conversely, if Γ⊢Δ,A and Λ⊢B,Θ, then Γ,Λ⊢Δ,A⊗B,Θ.
 
@@ -104,11 +106,11 @@ logic and see, what language construct each gives rise to.
 \paragraph{Rule:}
 $$
 {
- {\Sigma_1 \vdash A;\Delta_1}
+ {\Gamma_1 \vdash A;\Delta_1}
  \qquad
- {\Sigma_2 \vdash B;\Delta_2}
+ {\Gamma_2 \vdash B;\Delta_2}
 }\over{
- \Sigma_1, \Sigma_2 \vdash A \otimes B ; \Delta_1 ; \Delta_2
+ \Gamma_1, \Gamma_2 \vdash A \otimes B ; \Delta_1 ; \Delta_2
 }
 $$
 
@@ -121,9 +123,11 @@ of product type $A \otimes B$.
 \paragraph{Constraints and impact:} The available values are divided
 between the two subexpressions.  Any extra activation records created
 by the two subexpressions continue to exist.
+The three values involved in the transformation must each be alone in
+their activation record.
 
 \paragraph{Language construct:} Tuple creation, denoted by
-\begin{quote}\texttt
+\begin{quote}\tt
   (tuple ($e_1$ $e_2$ $\ldots$ $e_n$))
 \end{quote}
 (Note that the language construct is $n$-ary rather than binary.)
@@ -132,30 +136,105 @@ by the two subexpressions continue to exist.
 \paragraph{Rule:}
 $$
 {
-  \Sigma, A, B \vdash \Delta
+  \Gamma, A, B \vdash \Delta
 }\over{
-  \Sigma, A\otimes B \vdash \Delta
+  \Gamma, A\otimes B \vdash \Delta
 }
 $$
 
 \paragraph{What goes on:} A value of type $A \otimes B$ is split into two values of type $A$ and $B$, respectively.
-\paragraph{Constraints and impact:} The value of type $A \otimes B$ is consumed; two the new values become available; all other available values continue to exist.
+\paragraph{Constraints and impact:} The value of type $A \otimes B$ is consumed; the two new values become available; all other available values continue to exist.
 \paragraph{Language construct:} Tuple deconstruction, denoted by
-\begin{quote}\texttt
+\begin{quote}\tt
   (untuple ($v_1$ $v_2$ $\ldots$ $v_n$) $e_{tuple}$ $e_{body}$)
 \end{quote}
 (Note that the language construct is $n$-ary rather than binary.)\\
 The variables $v_i$ are bound to the elements of the tuple, and are available in the expression $e_{body}$.
 
 
+
 \subsection{Rules for $\oplus$, the Sum Type}
+% Dually, if Γ⊢Δ,A,Θ or Γ⊢Δ,B,Θ, then Γ⊢Δ,A⊕B,Θ; conversely, if Γ,A,Δ⊢Θ and Γ,B,Δ⊢Θ, then Γ,A⊕B,Δ⊢Θ.
+
+
+\subsubsection{Sum introduction}
+\paragraph{Rule:}
+$$
+{{
+  \Gamma \vdash A;\Delta
+}\over{
+  \Gamma \vdash A \oplus B;\Delta
+}}
+\qquad \textrm{and} \qquad
+{{
+  \Gamma \vdash B;\Delta
+}\over{
+  \Gamma \vdash A \oplus B;\Delta
+}}
+$$
+
+\paragraph{What goes on:} A value of type $A$ or of type $B$ is
+converted into a value of type $A \oplus B$.
+
+\paragraph{Constraints and impact:} The value of type $A$ or $B$ is
+consumed; the new value becomes available; all other available values
+continue to exist.
+The two values involved in the transformation must each be alone in
+their activation record.
+
+\paragraph{Language construct:} Sumtype injection, denoted by
+\begin{quote}\tt
+  (inject $\mathit{tag}$ $e$)
+\end{quote}
+(Note that the language construct is $n$-ary rather than binary, and
+uses symbolic injection tags.)
+
+
+\subsubsection{Sum elimination}
+\paragraph{Rule:}
+$$
+{
+% if Γ,A,Δ⊢Θ and Γ,B,Δ⊢Θ, then Γ,A⊕B,Δ⊢Θ.
+  \Gamma,A \vdash \Delta \qquad \Gamma,B \vdash \Delta
+}\over{
+  \Gamma, A\oplus B \vdash \Delta
+}
+$$
+
+\paragraph{What goes on:} A value of type $A \oplus B$ is converted to
+a value of type either $A$ or $B$. That value is then handled of one
+of two subexpressions -- one for $A$ and one for $B$.
+
+\paragraph{Constraints and impact:} The value of type $A \oplus B$ is
+consumed; the value of type $A$ or type $B$ becomes available.
+All other values remain available regardless of which subexpression is chosen.
+
+Furthermore, the same set of other activation records (with the same
+types) must be produced by the two subexpressions. This is also the
+set of activation records produced by the entire expression.
+
+\paragraph{Language construct:}
+\begin{quote}\tt
+  (case $e$\\
+  \phantom{ }\quad ($\mathit{tag_1}$ $\mathit{e_1}$)\\
+  \phantom{ }\quad \ldots\\
+  \phantom{ }\quad ($\mathit{tag_n}$ $\mathit{e_n}$))
+\end{quote}
+(Note that the language construct is $n$-ary rather than binary, and
+uses symbolic injection tags.)
+
+
+
 \subsection{Rules for $\&$, the Choice Type}
+
 \subsection{Rules for $|$, the Par Type}
 
 \paragraph{Rule:}
 \paragraph{What goes on:}
 \paragraph{Constraints and impact:}
 \paragraph{Language construct:}
+\begin{quote}\tt
+\end{quote}
 
 
 
