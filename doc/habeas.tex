@@ -187,7 +187,7 @@ their activation record.
   (inject $\mathit{tag}$ $e$)
 \end{quote}
 (Note that the language construct is $n$-ary rather than binary, and
-uses symbolic injection tags.)
+uses symbolic choice tags.)
 
 
 \subsubsection{Sum elimination}
@@ -226,10 +226,80 @@ uses symbolic injection tags.)
 
 
 \subsection{Rules for $\&$, the Choice Type}
+% If Γ⊢Δ,A,Θ and Γ⊢Δ,B,Θ, then Γ⊢Δ,A&B,Θ.
+
+\subsubsection{Choice introduction}
+
+\paragraph{Rule:}
+$$
+{
+  \Gamma \vdash A; \Delta
+  \qquad
+  \Gamma \vdash B; \Delta
+}\over{
+  \Gamma \vdash A\&B; \Delta
+}
+$$
+\paragraph{What goes on:} Two subexpressions which differ in that one
+produces a value of type $A$ and the other produces a value of type
+$B$ are combined into a value of type $A\&B$.
+
+\paragraph{Constraints and impact:} The two subexpressions must not
+otherwise differ in which values they consume and which types of activation
+records they produce.
+
+\paragraph{Language construct:}
+\begin{quote}\tt
+  (choice\\
+  \phantom{ }\quad ($\mathit{tag}_1$ $e_1$)\\
+  \phantom{ }\quad \ldots\\
+  \phantom{ }\quad ($\mathit{tag}_n$ $e_n$))
+\end{quote}
+(Note that the language construct is $n$-ary rather than binary, and
+uses symbolic injection tags.)
+The evaluation of the subexpressions themselves is postponed until the
+choice is made.
+\\(TODO: What about the extra activation records produced?)
+
+\subsubsection{Choice elimination}
+
+% If Γ,A,Δ⊢Θ or Γ,B,Δ⊢Θ, then Γ,A&B,Δ⊢Θ
+
+\paragraph{Rule:}
+$$
+{{
+  \Gamma, A \vdash \Delta
+}\over{
+  \Gamma, A \& B \vdash \Delta
+}}
+\qquad \textrm{and} \qquad
+{{
+  \Gamma, B \vdash \Delta
+}\over{
+  \Gamma, A \& B \vdash \Delta
+}}
+$$
+
+\paragraph{What goes on:} A value of a choice type is transformed into
+a value of one of the types it contains.
+
+\paragraph{Constraints and impact:} Nothing else happens.
+\paragraph{Language construct:}
+\begin{quote}\tt
+(select $\mathit{tag}$ $e$)
+\end{quote}
+(Note that the language construct is $n$-ary rather than binary, and
+uses symbolic choice tags.)
+
 
 \subsection{Rules for $|$, the Par Type}
 
 \paragraph{Rule:}
+$$
+{
+}\over{
+}
+$$
 \paragraph{What goes on:}
 \paragraph{Constraints and impact:}
 \paragraph{Language construct:}
