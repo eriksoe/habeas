@@ -1,0 +1,169 @@
+\documentclass[a4paper]{article}
+
+\title{Linear Logic as a Programming Language}
+\begin{document}
+\maketitle
+
+\section{Introduction}
+
+Habeas is to be a language based directly on linear logic.
+The language will have a construct for each of the derivation rules of LL.
+The rules are treated below.
+
+\section{General notes about the rules}
+
+Because of the difference in semantics between commas occurring on the
+left and on the right side of the turnstiles, we will here write the
+right-hand ones as semicolons instead, in an attempt to reduce risk of
+confusing ourselves.
+
+\paragraph{Concepts.} Central concepts regarding how the rules of
+linear logic are to be translated into programming language constructs
+are: types, variables, and values. These are as known from other
+programming languages.
+
+As it turns out, in linear logic there is an additional useful concept
+which we will call \emph{activation records}.  This term, too, is
+known from other programming languages, but activation records are
+perhaps more visible at the low level in linear logic.
+
+\paragraph{How to read the rules.} A raw type rule typically looks like this:
+$$
+{\Sigma,A \vdash B;\Delta}\over{\Sigma,A' \vdash B';\Delta}
+$$
+
+The mathematical reading of this is, ``if we can prove ${\Sigma,A
+  \vdash B;\Delta}$, then we can prove ${\Sigma,A' \vdash B';\Delta}$''.
+
+
+The interpretation of this rule as a programming language construct is
+somewhat different:
+\begin{quote}
+  ''Starting with a value of type $A'$ (and possibly some other values
+  $\Sigma$), we get to a state where we have a value of type $A$ (and
+  still $\Sigma$, unchanged). Then control passes to some sub-part of
+  the construct; when this part is done, it has left an activation
+  record of type $B$ as well as some other activation records
+  $\Delta$. The construct then transforms this into an activation
+  record of type $B'$ (and still $\Delta$, unchanged).''
+\end{quote}
+
+Thus, the control flow is from the left-hand side of the lower rule to
+the left-hand side of the upper rule (or rules -- there may be more
+than one; there may even be zero); then through the steps prescribed
+by whatever proof tree(s) are there to prove the upper rule(s); then
+from the right-hand side of the upper rule(s) down to the right-hand
+side of the lower rule.
+
+In general, there are a number of values available, and a number of
+activation records are produced.
+
+\paragraph{The cast.} Linear logic contains four binary connectives (type operators) and
+one unary operator:
+\begin{center}
+  \begin{tabular}{c|l|l}
+    \hline
+    \hline
+    Operator & Name & Approximate meaning\\
+    \hline
+    $\otimes$ & Times & Product type\\
+    $\oplus$  & Plus  & Sum type\\
+    $\&$      & With  & Choice type\\
+    $|$       & Par   & Independent evaluation\\
+    \hline
+    $\lnot$   & Not   & Resource sink\\
+    \hline
+  \end{tabular}
+\end{center}
+
+Each of the four binary operators have a neutral element:
+\begin{center}
+  \begin{tabular}{c|c|l|l}
+    \hline
+    \hline
+    Operator & Neutral & Name & Approximate meaning\\
+             & element &&\\
+    \hline
+    $\otimes$ & $1$    & One    & Void/unit\\
+    $\oplus$  & $0$    & Zero   & Impossible to create\\
+    $\&$      & $\top$ & Top    & Impossible to destroy\\
+    $|$       & $\bot$ & Bottom & The terminated activation record\\
+    \hline
+  \end{tabular}
+\end{center}
+
+\section{Linear Logic Rules and Habeas Language Constructs}
+
+In the following we go through each of the derivation rules of linear
+logic and see, what language construct each gives rise to.
+
+\subsection{Rules for $\otimes$, the Product Type}
+% If Γ,A,B,Δ⊢Θ, then Γ,A⊗B,Δ⊢Θ; conversely, if Γ⊢Δ,A and Λ⊢B,Θ, then Γ,Λ⊢Δ,A⊗B,Θ.
+
+\subsubsection{Product introduction}
+\paragraph{Rule:}
+$$
+{
+ {\Sigma_1 \vdash A;\Delta_1}
+ \qquad
+ {\Sigma_2 \vdash B;\Delta_2}
+}\over{
+ \Sigma_1, \Sigma_2 \vdash A \otimes B ; \Delta_1 ; \Delta_2
+}
+$$
+
+\paragraph{What goes on:} Two subexpressions create values of type $A$
+and $B$, respectively. These two values are then combined into a value
+of product type $A \otimes B$.
+
+% Of the available values, some go to creating a value of type $A$ (and a set of activation records), while the rest go to creating a value of type $B$ (and another set of activation records). The two values are then combined into a value of product type $A \otimes B$ (and the union of the activation records).
+
+\paragraph{Constraints and impact:} The available values are divided
+between the two subexpressions.  Any extra activation records created
+by the two subexpressions continue to exist.
+
+\paragraph{Language construct:} Tuple creation, denoted by
+\begin{quote}\texttt
+  (tuple ($e_1$ $e_2$ $\ldots$ $e_n$))
+\end{quote}
+(Note that the language construct is $n$-ary rather than binary.)
+
+\subsubsection{Product elimination}
+\paragraph{Rule:}
+$$
+{
+  \Sigma, A, B \vdash \Delta
+}\over{
+  \Sigma, A\otimes B \vdash \Delta
+}
+$$
+
+\paragraph{What goes on:} A value of type $A \otimes B$ is split into two values of type $A$ and $B$, respectively.
+\paragraph{Constraints and impact:} The value of type $A \otimes B$ is consumed; two the new values become available; all other available values continue to exist.
+\paragraph{Language construct:} Tuple deconstruction, denoted by
+\begin{quote}\texttt
+  (untuple ($v_1$ $v_2$ $\ldots$ $v_n$) $e_{tuple}$ $e_{body}$)
+\end{quote}
+(Note that the language construct is $n$-ary rather than binary.)\\
+The variables $v_i$ are bound to the elements of the tuple, and are available in the expression $e_{body}$.
+
+
+\subsection{Rules for $\oplus$, the Sum Type}
+\subsection{Rules for $\&$, the Choice Type}
+\subsection{Rules for $|$, the Par Type}
+
+\paragraph{Rule:}
+\paragraph{What goes on:}
+\paragraph{Constraints and impact:}
+\paragraph{Language construct:}
+
+
+
+% 'par' + negation provides a function/call mechanism.
+% 'with' + negation provides a multi-return-path mechanism.
+
+
+
+
+
+\end{document}

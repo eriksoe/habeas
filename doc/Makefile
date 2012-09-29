@@ -1,0 +1,2 @@
+doc:
+	latex habeas.tex
