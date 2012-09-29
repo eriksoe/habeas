@@ -292,6 +292,56 @@ a value of one of the types it contains.
 uses symbolic choice tags.)
 
 
+\subsection{Rules for $\lnot$ and for Channels}
+
+% If Γ⊢A,Δ, then Γ,A⊥⊢Δ; conversely and dually, if Γ,A⊢Δ, then Γ⊢A⊥,Δ.
+\subsubsection{Channel introduction}
+
+\paragraph{Rule:}
+$$
+{
+  \Gamma, A \vdash \Delta
+}\over{
+  \Gamma \vdash \lnot A; \Delta
+}
+$$
+
+\paragraph{What goes on:} A channel is introduced, in the form of a
+resource source/sink pair. A subexpression can then operate as if a
+resource of type $A$ is available.
+
+\paragraph{Constraints and impact:} The resource sink is introduced as
+an activation record of its own. The activation records resulting from
+the subexpression are seen as immediately available.
+
+\paragraph{Language construct:}
+\begin{quote}\tt
+  (make-sink $v_{sink}$ $v_{source}$ $e$)
+\end{quote}
+
+\subsubsection{Channel elimination}
+\paragraph{Rule:}
+$$
+{
+  \Gamma \vdash A; \Delta
+}\over{
+  \Gamma, \lnot A \vdash \Delta
+}
+$$
+
+\paragraph{What goes on:} A resource sink is eliminated by feeding it
+a value of the appropriate type.
+
+\paragraph{Constraints and impact:} The activation record representing
+the sink disappears.
+
+\paragraph{Language construct:}
+\begin{quote}\tt
+  (fill-sink $v_{sink}$ $e$)
+\end{quote}
+This construct evaluates to $1$ (the void value).
+
+
 \subsection{Rules for $|$, the Par Type}
 
 \paragraph{Rule:}
