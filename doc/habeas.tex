@@ -8,26 +8,43 @@
 
 Habeas is to be a language based directly on linear logic.
 The language will have a construct for each of the derivation rules of LL.
-The rules are treated below.
+
+The design aim is to reflect linear logic as faithfully as possible,
+with no arbitrary restrictions, while at the same time packaging it in
+a useful manner.
+
+The rules are treated below, one by one.
 
 \section{General notes about the rules}
 
 \paragraph{Notation.}
+As is the norm, $A, B, \ldots$ denote single
+propositions/types/resources, while $\Gamma, \Delta, \ldots$ denote
+(multi)sets of such.
+
 Because of the difference in semantics between commas occurring on the
 left and on the right side of the turnstiles, we will here write the
 right-hand ones as semicolons instead, in an attempt to reduce risk of
 confusing ourselves.
-% TODO: We use $\lnot A$ rather than $A^\bot$.
+
+For typographical reasons, we will use $A|B$ rather than the more
+common ``inverted ampersand'' operator; both are used elsewhere.
+Less commonly, we use $\lnot A$ rather than $A^\bot$.
 
 \paragraph{Concepts.} Central concepts regarding how the rules of
 linear logic are to be translated into programming language constructs
 are: types, variables, and values. These are as known from other
 programming languages.
+Variables are (static) names for the (dynamic) values available at a
+given program point; to these variables can (statically) be assigned
+types which describe which kinds of values might occur.
 
-As it turns out, in linear logic there is an additional useful concept
-which we will call \emph{activation records}.  This term, too, is
-known from other programming languages, but activation records are
-perhaps more visible at the low level in linear logic.
+\paragraph{Channels.} As it turns out, in linear logic there is an additional useful concept
+which we will call \emph{channels}.
+Whereas in e.g. lambda calculus, an expression returns one value of a
+certain types, in linear logic we can interpret expressions as
+returning a value of a certain type \emph{plus} a set of channels
+(also typed).
 
 % TODO: Reflecting new insights,
 % - replace "activation records" with "channels",
@@ -50,21 +67,26 @@ somewhat different:
   ''Starting with a value of type $A'$ (and possibly some other values
   $\Gamma$), we get to a state where we have a value of type $A$ (and
   still $\Gamma$, unchanged). Then control passes to some sub-part of
-  the construct; when this part is done, it has left an activation
-  record of type $B$ as well as some other activation records
-  $\Delta$. The construct then transforms this into an activation
-  record of type $B'$ (and still $\Delta$, unchanged).''
+  the construct; when this part is done and control return to the construct,
+  it has left a result of type $B$ as well as a set of channels
+  $\Delta$. The construct then transforms this into a value of type
+  $B'$ (and still $\Delta$, unchanged).''
 \end{quote}
 
-Thus, the control flow is from the left-hand side of the lower rule to
+Thus, the control flow up-right-down:
+from the left-hand side of the lower rule to
 the left-hand side of the upper rule (or rules -- there may be more
 than one; there may even be zero); then through the steps prescribed
 by whatever proof tree(s) are there to prove the upper rule(s); then
 from the right-hand side of the upper rule(s) down to the right-hand
 side of the lower rule.
 
-In general, there are a number of values available, and a number of
-activation records are produced.
+In general, there are a number of values available, and a value plus a
+number of channels are produced.
+
+Note that our choice to interpret the right-hand side as a return
+value plus a number of channels is rather arbitrary: there is no a
+priori difference between the return value and a channel.
 
 \paragraph{The cast.} Linear logic contains four binary connectives (type operators) and
 one unary operator:
@@ -95,7 +117,7 @@ Each of the four binary operators have a neutral element:
     $\otimes$ & $1$    & One    & Void/unit\\
     $\oplus$  & $0$    & Zero   & Impossible to create\\
     $\&$      & $\top$ & Top    & Impossible to destroy\\
-    $|$       & $\bot$ & Bottom & The terminated activation record\\
+    $|$       & $\bot$ & Bottom & A terminated process\\
     \hline
   \end{tabular}
 \end{center}
@@ -106,9 +128,67 @@ Each of the four binary operators have a neutral element:
 In the following we go through each of the derivation rules of linear
 logic and see, what language construct each gives rise to.
 
+\paragraph{Design choice: Symbolic names.}
+Note that whereas the rules of linear logic deal with binary
+operators, we have here chosen to operate with $n$-ary type
+constructors in most cases.  Also, in most cases we have elected to
+let the constituents be addressed by symbolic names (\emph{tags}),
+rather than merely by their position.
+
+Thus, instead of for example having a binary sum type $A \oplus B$
+with ``left-'' and ``right-''injection functions, we have an $n$-ary
+sum type $(\mathit{tag}_1:T_1 \oplus \mathit{tag}_2:T_2 \oplus \ldots
+\oplus \mathit{tag}_n:T_n)$, with an injection function for each tag.
+
+
+\subsection{General rules}
+
+\subsubsection{The ``cut'' rule}
+\paragraph{Rule:}
+$$
+{
+  \Gamma_1 \vdash A; \Delta_1
+  \qquad
+  \Gamma_2,A \vdash \Delta_2
+}\over{
+  \Gamma_1, \Gamma_2 \vdash \Delta_1; \Delta_2
+}
+$$
+
+\paragraph{What goes on:} First, one subexpression evaluates to a
+value of type $A$, then another subexpression consumes that values.
+
+\paragraph{Constraints and impact:} The entire expression consumes the
+union of what the two subexpressions consume, save for the mentioned
+value; and it produces a set of channels which is the union of that
+produced by the two subexpressions. The result of the entire
+expression is that of the second subexpression.
+
+\paragraph{Language construct:}
+\begin{quote}\tt
+(let (($v$ $e_{bind}$)) $e_{body}$)
+\end{quote}
+This is generalized to the \texttt{let} and \texttt{let*} constructs
+known from Lisp:
+\begin{quote}\tt
+(let\\
+  \phantom{ }\quad (($v_1$ $e_{bind,1}$)\\
+  \phantom{ }\quad \ldots\\
+  \phantom{ }\quad\ ($v_n$ $e_{bind,n}$))\\
+  \phantom{ }\quad $e_{body}$)
+\end{quote}
+defined as \texttt{(let (($v_1$ $e_{bind,1}$)) (let (($v_2$ $e_{bind,2}$)) \ldots\ $e_{body}$)\ldots)}.
+
+(The difference between \texttt{let} and \texttt{let*} is in whether
+$e_{bind,j}$ may refer to $v_i$ for $i<j$. \texttt{let*} allows this,
+while \texttt{let} does not.)
+
+
 
 \subsection{Rules for $\otimes$, the Product Type}
 % If Γ,A,B,Δ⊢Θ, then Γ,A⊗B,Δ⊢Θ; conversely, if Γ⊢Δ,A and Λ⊢B,Θ, then Γ,Λ⊢Δ,A⊗B,Θ.
+
+(Note that the language's product type is $n$-ary rather than binary.)
 
 \subsubsection{Product introduction}
 \paragraph{Rule:}
@@ -126,19 +206,16 @@ $$
 and $B$, respectively. These two values are then combined into a value
 of product type $A \otimes B$.
 
-% Of the available values, some go to creating a value of type $A$ (and a set of activation records), while the rest go to creating a value of type $B$ (and another set of activation records). The two values are then combined into a value of product type $A \otimes B$ (and the union of the activation records).
+% Of the available values, some go to creating a value of type $A$ (and a set of channels), while the rest go to creating a value of type $B$ (and another set of channels). The two values are then combined into a value of product type $A \otimes B$ (and the union of the channels).
 
 \paragraph{Constraints and impact:} The available values are divided
-between the two subexpressions.  Any extra activation records created
+between the two subexpressions.  Any channels created
 by the two subexpressions continue to exist.
-The three values involved in the transformation must each be alone in
-their activation record.
 
 \paragraph{Language construct:} Tuple creation, denoted by
 \begin{quote}\tt
   (tuple ($e_1$ $e_2$ $\ldots$ $e_n$))
 \end{quote}
-(Note that the language construct is $n$-ary rather than binary.)
 
 \subsubsection{Product elimination}
 \paragraph{Rule:}
@@ -151,18 +228,22 @@ $$
 $$
 
 \paragraph{What goes on:} A value of type $A \otimes B$ is split into two values of type $A$ and $B$, respectively.
+
 \paragraph{Constraints and impact:} The value of type $A \otimes B$ is consumed; the two new values become available; all other available values continue to exist.
+
 \paragraph{Language construct:} Tuple deconstruction, denoted by
 \begin{quote}\tt
   (untuple ($v_1$ $v_2$ $\ldots$ $v_n$) $e_{tuple}$ $e_{body}$)
 \end{quote}
-(Note that the language construct is $n$-ary rather than binary.)\\
 The variables $v_i$ are bound to the elements of the tuple, and are available in the expression $e_{body}$.
 
 
 
 \subsection{Rules for $\oplus$, the Sum Type}
 % Dually, if Γ⊢Δ,A,Θ or Γ⊢Δ,B,Θ, then Γ⊢Δ,A⊕B,Θ; conversely, if Γ,A,Δ⊢Θ and Γ,B,Δ⊢Θ, then Γ,A⊕B,Δ⊢Θ.
+
+(Note that the language construct is $n$-ary rather than binary, and
+uses symbolic tags.)
 
 
 \subsubsection{Sum introduction}
@@ -187,15 +268,11 @@ converted into a value of type $A \oplus B$.
 \paragraph{Constraints and impact:} The value of type $A$ or $B$ is
 consumed; the new value becomes available; all other available values
 continue to exist.
-The two values involved in the transformation must each be alone in
-their activation record.
 
 \paragraph{Language construct:} Sumtype injection, denoted by
 \begin{quote}\tt
   (inject $\mathit{tag}$ $e$)
 \end{quote}
-(Note that the language construct is $n$-ary rather than binary, and
-uses symbolic choice tags.)
 
 
 \subsubsection{Sum elimination}
@@ -217,9 +294,10 @@ of two subexpressions -- one for $A$ and one for $B$.
 consumed; the value of type $A$ or type $B$ becomes available.
 All other values remain available regardless of which subexpression is chosen.
 
-Furthermore, the same set of other activation records (with the same
-types) must be produced by the two subexpressions. This is also the
-set of activation records produced by the entire expression.
+Furthermore, the results and channel sets produced by the two
+subexpressions must have the same types.
+This is also the result and channel set produced by the entire
+expression.
 
 \paragraph{Language construct:}
 \begin{quote}\tt
@@ -228,13 +306,14 @@ set of activation records produced by the entire expression.
   \phantom{ }\quad \ldots\\
   \phantom{ }\quad ($\mathit{tag_n}$ $\mathit{e_n}$))
 \end{quote}
-(Note that the language construct is $n$-ary rather than binary, and
-uses symbolic injection tags.)
 
 
 
 \subsection{Rules for $\&$, the Choice Type}
 % If Γ⊢Δ,A,Θ and Γ⊢Δ,B,Θ, then Γ⊢Δ,A&B,Θ.
+
+(Note that the language construct is $n$-ary rather than binary, and
+uses symbolic tags.)
 
 \subsubsection{Choice introduction}
 
@@ -253,8 +332,8 @@ produces a value of type $A$ and the other produces a value of type
 $B$ are combined into a value of type $A\&B$.
 
 \paragraph{Constraints and impact:} The two subexpressions must not
-otherwise differ in which values they consume and which types of activation
-records they produce.
+otherwise differ in which values they consume or in the number and
+types of channels they produce.
 
 \paragraph{Language construct:}
 \begin{quote}\tt
@@ -263,11 +342,9 @@ records they produce.
   \phantom{ }\quad \ldots\\
   \phantom{ }\quad ($\mathit{tag}_n$ $e_n$))
 \end{quote}
-(Note that the language construct is $n$-ary rather than binary, and
-uses symbolic injection tags.)
 The evaluation of the subexpressions themselves is postponed until the
-choice is made.
-\\(TODO: What about the extra activation records produced?)
+choice is made; nor will the produced channels yield output until that time.
+
 
 \subsubsection{Choice elimination}
 
@@ -291,19 +368,27 @@ $$
 \paragraph{What goes on:} A value of a choice type is transformed into
 a value of one of the types it contains.
 
-\paragraph{Constraints and impact:} Nothing else happens.
+\paragraph{Constraints and impact:}
+From a local view, nothing else happens;
+however, the choice may have the side effect of enabling output from
+some channels. See the introduction rule.
+
 \paragraph{Language construct:}
 \begin{quote}\tt
 (select $\mathit{tag}$ $e$)
 \end{quote}
-(Note that the language construct is $n$-ary rather than binary, and
-uses symbolic choice tags.)
 
 
-\subsection{Rules for $\lnot$ and for Channels}
+\subsection{Rules for $\lnot$, the Channel Sink Type}
+
+Channels are non-local means of transfering values.
+Each channel transfers one value.
+A channel has two ends: the \emph{sink end}, into which the value is
+put, and a \emph{source end}, from which the value can then be
+extracted.
 
 % If Γ⊢A,Δ, then Γ,A⊥⊢Δ; conversely and dually, if Γ,A⊢Δ, then Γ⊢A⊥,Δ.
-\subsubsection{Channel introduction}
+\subsubsection{Channel sink introduction}
 
 \paragraph{Rule:}
 $$
@@ -323,11 +408,21 @@ an activation record of its own. The activation records resulting from
 the subexpression are seen as immediately available.
 
 \paragraph{Language construct:}
+There are at least two choices here, depending on which channel is
+chosen as the main output (the obvious choices being $\lnot A$ and the
+result of the subexpression).
+%
+We'll choose a construct which is compatible with strict evaluation:
 \begin{quote}\tt
-  (make-sink $v_{sink}$ $v_{source}$ $e$)
+  (channel-into $v$ $e_{body}$ $\mathit{tag}_{output}$)
 \end{quote}
+Here, $v$ is bound to the source end of the channel and has scope of
+$e_{body}$.  The sink end of the channel is returned as the result of
+the entire expression.
+The result of the subexpression is returned as a new channel named
+$\mathit{tag}_{output}$, along with the ones produced by $e_{body}$.
 
-\subsubsection{Channel elimination}
+\subsubsection{Channel sink elimination}
 \paragraph{Rule:}
 $$
 {
@@ -337,17 +432,16 @@ $$
 }
 $$
 
-\paragraph{What goes on:} A resource sink is eliminated by feeding it
+\paragraph{What goes on:} A channel sink is eliminated by feeding it
 a value of the appropriate type.
 
-\paragraph{Constraints and impact:} The activation record representing
-the sink disappears.
+\paragraph{Constraints and impact:} The channel disappears.
 
 \paragraph{Language construct:}
 \begin{quote}\tt
-  (fill-sink $v_{sink}$ $e$)
+  (feed-channel $e_{sink}$ $e$)
 \end{quote}
-This construct evaluates to $1$ (the void value).
+This construct evaluates to $\bot$ (the terminated channel value).
 
 
 \subsection{Rules for $|$, the Par Type}
