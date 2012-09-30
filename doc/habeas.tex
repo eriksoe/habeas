@@ -46,11 +46,7 @@ certain types, in linear logic we can interpret expressions as
 returning a value of a certain type \emph{plus} a set of channels
 (also typed).
 
-% TODO: Reflecting new insights,
-% - replace "activation records" with "channels",
-% - have each construct return a value *and* a set of named channels;
-% - and rewrite all A.R.-related explanations.
-% (Also, add "switch channel" construct.)
+% TODO: The semantics for channels may fit well to something like catch handlers, or shell redirections: they are set up on the way in, rather than dealt with on the way out.
 
 \paragraph{How to read the rules.} A raw type rule typically looks like this:
 $$
@@ -435,7 +431,8 @@ $$
 \paragraph{What goes on:} A channel sink is eliminated by feeding it
 a value of the appropriate type.
 
-\paragraph{Constraints and impact:} The channel disappears.
+\paragraph{Constraints and impact:} The channel sink disappears, along
+with the value.
 
 \paragraph{Language construct:}
 \begin{quote}\tt
@@ -446,22 +443,64 @@ This construct evaluates to $\bot$ (the terminated channel value).
 
 \subsection{Rules for $|$, the Par Type}
 
+% If Γ⊢Δ,A,B,Θ, then Γ⊢Δ,A|B,Θ; conversely, if Γ,A⊢Δ and B,Θ⊢Λ, then Γ,A|B,Θ⊢Δ,Λ.
+
+\subsubsection{Par introduction}
+
 \paragraph{Rule:}
 $$
 {
+  \Gamma \vdash A; B; \Delta
 }\over{
+  \Gamma \vdash A|B; \Delta
 }
 $$
-\paragraph{What goes on:}
+\paragraph{What goes on:} Two channels are combined in a value of ``par'' type.
+\paragraph{Constraints and impact:}
+\paragraph{Language construct:}
+\begin{quote}\tt
+\end{quote}
+
+\subsubsection{Par elimination}
+
+\paragraph{Rule:}
+$$
+{
+  \Gamma_1, A \vdash \Delta_1
+  \qquad
+  \Gamma_2, B \vdash \Delta_2
+}\over{
+  \Gamma_1, \Gamma_2, A|B \vdash \Delta_1; \Delta_2
+}
+$$
+
+\paragraph{What goes on:} A value of ``par'' type is split into its
+constituent channels, the outputs of which are each made available in
+a subexpression. The subexpressions are then evaluated independently
+(possibly in parallel; note that the channels may be triggered in any order.).
+
 \paragraph{Constraints and impact:}
 \paragraph{Language construct:}
 \begin{quote}\tt
 \end{quote}
 
 
+% \paragraph{Rule:}
+% $$
+% {
+% }\over{
+% }
+% $$
+% \paragraph{What goes on:}
+% \paragraph{Constraints and impact:}
+% \paragraph{Language construct:}
+% \begin{quote}\tt
+% \end{quote}
+
+
 % TODO: Remember rules for 'void' (1) and 'fail' ($\top$), and an
 % implicit one for $\bot$.
-% TODO: The 'let' construct (the 'cut' rule).
+% TODO: A construct for selecting a different channel (and naming the default one)
 
 
 % 'par' + negation provides a function/call mechanism.
