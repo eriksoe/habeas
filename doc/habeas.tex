@@ -499,10 +499,16 @@ $$
   !\Gamma \vdash !A; ?\Delta
 }
 $$
-\paragraph{What goes on:}
-\paragraph{Constraints and impact:}
+\paragraph{What goes on:} A subexpression is turned into a factory.
+
+\paragraph{Constraints and impact:} This can only be done when no
+linear resources are consumed or produced by the subexpression;
+rather, all consumed resources must be factories themselves, while all
+produced channels must be pollutions.
+
 \paragraph{Language construct:}
 \begin{quote}\tt
+  (make-factory $e$)
 \end{quote}
 
 \subsubsection{Factory splitting}
@@ -515,10 +521,11 @@ $$
   \Gamma, !A \vdash \Delta
 }
 $$
-\paragraph{What goes on:}
-\paragraph{Constraints and impact:}
+\paragraph{What goes on:} A factory is split into two.
+\paragraph{Constraints and impact:} (None.)
 \paragraph{Language construct:}
 \begin{quote}\tt
+  (split-factory $v_1$ $v_2$ $e$)
 \end{quote}
 
 \subsubsection{Factory elimination (through use)}
@@ -531,13 +538,14 @@ $$
   \Gamma, !A \vdash \Delta
 }
 $$
-\paragraph{What goes on:}
-\paragraph{Constraints and impact:}
+\paragraph{What goes on:} A factory is used for generating a value.
+\paragraph{Constraints and impact:} (None.)
 \paragraph{Language construct:}
 \begin{quote}\tt
+  (instantiate $e$)
 \end{quote}
 
-\subsubsection{Factory elimination (through disuse)}
+\subsubsection{Factory elimination (through disposal)}
 % If Γ,Δ⊢Θ, then Γ,!A,Δ⊢Θ, for any A.
 \paragraph{Rule:}
 $$
@@ -547,16 +555,17 @@ $$
   \Gamma, !A \vdash \Delta
 }
 $$
-\paragraph{What goes on:}
-\paragraph{Constraints and impact:}
+\paragraph{What goes on:} A factory is disposed of.
+\paragraph{Constraints and impact:} (None.)
 \paragraph{Language construct:}
 \begin{quote}\tt
+  (dispose-factory $e$)
 \end{quote}
+This expression evaluates to a value of the unit type $1$.
 
+\subsection{Rules for $?$, the Pollution Type}
 
-\subsection{Rules for $?$, the Collection Type}
-
-\subsubsection{Collection introduction (empty case)}
+\subsubsection{Pollution introduction (empty case)}
 % If Γ⊢Δ,Θ, then Γ⊢Δ,?A,Θ for any A.
 \paragraph{Rule:}
 $$
@@ -566,13 +575,14 @@ $$
   \Gamma \vdash ?A;\Delta
 }
 $$
-\paragraph{What goes on:}
-\paragraph{Constraints and impact:}
+\paragraph{What goes on:} An empty pollution is created.
+\paragraph{Constraints and impact:} (None.)
 \paragraph{Language construct:}
 \begin{quote}\tt
+  (empty-pollution)
 \end{quote}
 
-\subsubsection{Collection introduction (singleton case)}
+\subsubsection{Pollution introduction (singleton case)}
 % If Γ⊢Δ,A,Θ, then Γ⊢Δ,?A,Θ.
 \paragraph{Rule:}
 $$
@@ -582,13 +592,14 @@ $$
   \Gamma \vdash ?A;\Delta
 }
 $$
-\paragraph{What goes on:}
-\paragraph{Constraints and impact:}
+\paragraph{What goes on:} A pollution is created from a single element.
+\paragraph{Constraints and impact:} (None.)
 \paragraph{Language construct:}
 \begin{quote}\tt
+  (single-pollution $e$)
 \end{quote}
 
-\subsubsection{Collection combination}
+\subsubsection{Pollution combination}
 % If Γ⊢Δ,?A,?A,Θ, then Γ⊢Δ,?A,Θ.
 \paragraph{Rule:}
 $$
@@ -598,13 +609,15 @@ $$
   \Gamma \vdash ?A; \Delta
 }
 $$
-\paragraph{What goes on:}
-\paragraph{Constraints and impact:}
+\paragraph{What goes on:} Two pollutions of the same type are combined into one.
+\paragraph{Constraints and impact:} (None.)
 \paragraph{Language construct:}
 \begin{quote}\tt
+  (combine-pollution-with-channel $e$ $\mathit{tag}_{channel}$)
 \end{quote}
+% TODO: There is a channels vs. variables issue, generally: should it be possible to bind a set of channels?
 
-\subsubsection{Collection elimination}
+\subsubsection{Pollution elimination}
 % If Γ,A,Δ⊢Θ, then Γ,?A,Δ⊢Θ, whenever Γ and Δ consist entirely of propositions of the form !− while Θ consists entirely of propositions of the form ?−.
 \paragraph{Rule:}
 $$
@@ -614,11 +627,17 @@ $$
   !\Gamma, ?A \vdash ?\Delta
 }
 $$
-\paragraph{What goes on:}
-\paragraph{Constraints and impact:}
+\paragraph{What goes on:} A pollution value is consumed by a subexpression.
+
+\paragraph{Constraints and impact:} The subexpression must not consume
+or produce linear values; rather, all consumed resources must be
+factories, while all produced channels must be also be pollutions.
+
 \paragraph{Language construct:}
 \begin{quote}\tt
+  (eliminate-pollution $e_{pollution}$ $v$ $e_{elim}$)
 \end{quote}
+were $v$ has scope in $e_{elim}$.
 
 % \paragraph{Rule:}
 % $$
