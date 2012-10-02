@@ -485,6 +485,141 @@ a subexpression. The subexpressions are then evaluated independently
 \end{quote}
 
 
+\subsection{Rules for $!$, the Factory Type}
+
+\subsubsection{Factory introduction}
+
+%if Γ⊢Δ,A,Θ, then Γ⊢Δ,!A,Θ, whenever Γ consists entirely of propositions of the form !− while Δ and Θ consist entirely of propositions of the form ?−.
+
+\paragraph{Rule:}
+$$
+{
+  !\Gamma \vdash A; ?\Delta
+}\over{
+  !\Gamma \vdash !A; ?\Delta
+}
+$$
+\paragraph{What goes on:}
+\paragraph{Constraints and impact:}
+\paragraph{Language construct:}
+\begin{quote}\tt
+\end{quote}
+
+\subsubsection{Factory splitting}
+% If Γ,!A,!A,Δ⊢Θ, then Γ,!A,Δ⊢Θ
+\paragraph{Rule:}
+$$
+{
+  \Gamma, !A, !A \vdash \Delta
+}\over{
+  \Gamma, !A \vdash \Delta
+}
+$$
+\paragraph{What goes on:}
+\paragraph{Constraints and impact:}
+\paragraph{Language construct:}
+\begin{quote}\tt
+\end{quote}
+
+\subsubsection{Factory elimination (through use)}
+% If Γ,A,Δ⊢Θ, then Γ,!A,Δ⊢Θ.
+\paragraph{Rule:}
+$$
+{
+  \Gamma, A \vdash \Delta
+}\over{
+  \Gamma, !A \vdash \Delta
+}
+$$
+\paragraph{What goes on:}
+\paragraph{Constraints and impact:}
+\paragraph{Language construct:}
+\begin{quote}\tt
+\end{quote}
+
+\subsubsection{Factory elimination (through disuse)}
+% If Γ,Δ⊢Θ, then Γ,!A,Δ⊢Θ, for any A.
+\paragraph{Rule:}
+$$
+{
+  \Gamma \vdash \Delta
+}\over{
+  \Gamma, !A \vdash \Delta
+}
+$$
+\paragraph{What goes on:}
+\paragraph{Constraints and impact:}
+\paragraph{Language construct:}
+\begin{quote}\tt
+\end{quote}
+
+
+\subsection{Rules for $?$, the Collection Type}
+
+\subsubsection{Collection introduction (empty case)}
+% If Γ⊢Δ,Θ, then Γ⊢Δ,?A,Θ for any A.
+\paragraph{Rule:}
+$$
+{
+  \Gamma \vdash \Delta
+}\over{
+  \Gamma \vdash ?A;\Delta
+}
+$$
+\paragraph{What goes on:}
+\paragraph{Constraints and impact:}
+\paragraph{Language construct:}
+\begin{quote}\tt
+\end{quote}
+
+\subsubsection{Collection introduction (singleton case)}
+% If Γ⊢Δ,A,Θ, then Γ⊢Δ,?A,Θ.
+\paragraph{Rule:}
+$$
+{
+  \Gamma \vdash A;\Delta
+}\over{
+  \Gamma \vdash ?A;\Delta
+}
+$$
+\paragraph{What goes on:}
+\paragraph{Constraints and impact:}
+\paragraph{Language construct:}
+\begin{quote}\tt
+\end{quote}
+
+\subsubsection{Collection combination}
+% If Γ⊢Δ,?A,?A,Θ, then Γ⊢Δ,?A,Θ.
+\paragraph{Rule:}
+$$
+{
+  \Gamma \vdash ?A; ?A; \Delta
+}\over{
+  \Gamma \vdash ?A; \Delta
+}
+$$
+\paragraph{What goes on:}
+\paragraph{Constraints and impact:}
+\paragraph{Language construct:}
+\begin{quote}\tt
+\end{quote}
+
+\subsubsection{Collection elimination}
+% If Γ,A,Δ⊢Θ, then Γ,?A,Δ⊢Θ, whenever Γ and Δ consist entirely of propositions of the form !− while Θ consists entirely of propositions of the form ?−.
+\paragraph{Rule:}
+$$
+{
+  !\Gamma, A \vdash ?\Delta
+}\over{
+  !\Gamma, ?A \vdash ?\Delta
+}
+$$
+\paragraph{What goes on:}
+\paragraph{Constraints and impact:}
+\paragraph{Language construct:}
+\begin{quote}\tt
+\end{quote}
+
 % \paragraph{Rule:}
 % $$
 % {
